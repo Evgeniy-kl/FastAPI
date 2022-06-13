@@ -1,0 +1,27 @@
+version: '3.9'
+
+services:
+  dynamo-db-local:
+    image: "amazon/dynamodb-local:latest"
+    container_name: dynamo-db-local
+    ports:
+      - "8000:8000"
+    command: " -jar DynamoDBLocal.jar -sharedDb -dbPath ."
+
+  fastapi:
+    image: "fastapi"
+    container_name: fastapi
+    build: app
+    volumes:
+      - ./app:/code:cached
+    ports:
+      - "5001:5001"
+    depends_on:
+      - dynamodb
+
+  queue:
+    container_name: fastapi_queue
+    restart: always
+    build: app
+    entrypoint: 'python -u consumer.py'
+
