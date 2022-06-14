@@ -1,36 +1,32 @@
-import pika
-import models
+import schema
 from database.db import dynamodb
 from services import DynamoManage
 import json
-from funcs import create_user
+from services import UserManage
+from services import RabbitManage
+import os
+
+connection_obj = RabbitManage(
+    os.getenv('host', 'moose.rmq.cloudamqp.com'),
+    os.getenv('port', 5672),
+    os.getenv('virtualhost', 'nzocntbp'),
+    os.getenv('username', 'nzocntbp'),
+    os.getenv('password', 'bLDWuRiZsMh96jL2d0yCAiMvvWtBvpTr')
+)
+channel = connection_obj.connect('django_queue')
 
 
-credentials = pika.PlainCredentials('nzocntbp', 'bLDWuRiZsMh96jL2d0yCAiMvvWtBvpTr')
-parameters = pika.ConnectionParameters('moose.rmq.cloudamqp.com',
-                                       5672,
-                                       'nzocntbp',
-                                       credentials)
-
-connection = pika.BlockingConnection(parameters)
-
-channel = connection.channel()
-
-channel.queue_declare(queue='django_queue')
-
-
-def callback(ch, method, properties, body):
-    table = dynamodb.Table("PythhoDB")
+def callback(body):
+    table = dynamodb.Table("PythonDB")
     print(f'Received: {body}')
     body = json.loads(body)
-    user = models.UserStat(user_email=body['user'])
+    user = schema.UserStat(user_email=body['user'])
     if not table.get_item(
             Key={'user_email': user.user_email}
     ).get('Item'):
-        print(create_user(user.dict()))
-        print(user.dict())
+        UserManage.create_user(user.dict())
     else:
-        print('---')
+        print('EXISTING ROW')
     DynamoManage.increment_field(user.user_email, body['method'], table)
 
 

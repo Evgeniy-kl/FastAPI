@@ -10,5 +10,6 @@ RUN pip install pipenv
 RUN pipenv install --system --deploy
 
 COPY . /code/
-EXPOSE 5001
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5001", "--reload"]
+COPY entrypoint.sh ./
+RUN ["chmod", "+x", "entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]

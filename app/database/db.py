@@ -10,7 +10,7 @@ dynamodb = resource('dynamodb',
 
 tables = [
     {
-        "TableName": "PythhoDB",
+        "TableName": "PythonDB",
         "KeySchema": [
             {
                 'AttributeName': 'user_email',
